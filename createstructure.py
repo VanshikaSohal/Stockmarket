@@ -480,17 +480,17 @@ def test_fetch_data():
     for folder in folders:
         if not os.path.exists(folder):
             os.makedirs(folder)
-            print(f"✅ Created folder: {folder}/")
+            print(f"Created folder: {folder}/")
     
     # Create all files
     for file_path, content in files.items():
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        print(f"✅ Created file: {file_path}")
+        print(f"Created file: {file_path}")
     
-    print(f"\n🎉 Project structure created successfully in current directory!")
-    print(f"📁 Location: {os.path.abspath('.')}")
-    print(f"\n🚀 Next steps:")
+    print(f"\ Project structure created successfully in current directory!")
+    print(f" Location: {os.path.abspath('.')}")
+    print(f"\n Next steps:")
     print(f"   1. python -m venv venv")
     print(f"   2. source venv/bin/activate  (or venv\\Scripts\\activate on Windows)")
     print(f"   3. pip install -r requirements.txt")
