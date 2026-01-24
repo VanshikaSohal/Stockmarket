@@ -498,8 +498,8 @@ def test_fetch_data():
 
 if __name__ == "__main__":
     # Warning before execution
-    print("⚠️  WARNING: This will create files and folders in the CURRENT directory!")
-    print(f"📂 Current directory: {os.path.abspath('.')}")
+    print(" WARNING: This will create files and folders in the CURRENT directory!")
+    print(f" Current directory: {os.path.abspath('.')}")
     response = input("\nDo you want to continue? (yes/no): ")
     
     if response.lower() in ['yes', 'y']:
