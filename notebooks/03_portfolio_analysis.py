@@ -16,3 +16,17 @@ weights = np.array([1 / n_assets] * n_assets)
 portfolio_returns = returns.dot(weights)
 
 
+
+
+
+cumulative_return = (1 + portfolio_returns).cumprod()
+
+
+
+
+plt.figure()
+plt.plot(cumulative_return)
+plt.title('Portfolio Cumulative Return')
+plt.xlabel('Date')
+plt.ylabel('Growth of $1')
+plt.show()
