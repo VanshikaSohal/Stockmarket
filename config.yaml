@@ -1,26 +1,38 @@
 # Portfolio Configuration
 
-# Stock Selection
+# Stock Universe (must be a subset of tickers downloaded in notebook 01)
 stocks:
   - AAPL
   - MSFT
+  - GOOGL
   - JNJ
   - JPM
   - XOM
+  - AMZN
+  - V
+  - UNH
+  - WMT
+  - PFE
 
-# Portfolio Weights (must sum to 1.0)
+# Portfolio Weights for the default config-defined portfolio (must sum to 1.0)
 weights:
-  - 0.25
-  - 0.25
-  - 0.20
-  - 0.20
+  - 0.12
+  - 0.12
   - 0.10
+  - 0.10
+  - 0.10
+  - 0.08
+  - 0.10
+  - 0.10
+  - 0.08
+  - 0.08
+  - 0.02
 
 # Data Parameters
 data:
-  start_date: "2023-01-01"
-  end_date: "2024-12-29"
-  
+  start_date: "2020-01-01"
+  end_date: "2024-12-30"
+
 # Risk Metrics Configuration
 risk_metrics:
   var_confidence: 0.95
@@ -32,4 +44,5 @@ risk_metrics:
 ml_params:
   test_size: 0.2
   random_state: 42
-  lstm_sequence_length: 60
+  sequence_length: 60
+  n_lags: 5
