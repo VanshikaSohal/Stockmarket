@@ -10,7 +10,7 @@ from src.models.time_series import (
     create_sequences,
     fit_arima,
     forecast_arima,
-    train_lstm,
+    train_ridge_sequence,
 )
 
 __all__ = [
@@ -23,5 +23,5 @@ __all__ = [
     "forecast_arima",
     "create_sequences",
     "build_lstm_model",
-    "train_lstm",
+    "train_ridge_sequence",
 ]

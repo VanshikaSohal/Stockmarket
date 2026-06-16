@@ -101,9 +101,9 @@ def build_lstm_model(input_shape):
     return Ridge(alpha=1.0)
 
 
-def train_lstm(series, seq_length=60, test_size=0.2):
+def train_ridge_sequence(series, seq_length=60, test_size=0.2):
     """
-    Train a sequence model on a univariate price or return series.
+    Ridge regression on sliding window sequences.
 
     Scales the data with MinMaxScaler, creates overlapping windows, splits into
     train/test, fits a Ridge regression on flattened windows, and evaluates.

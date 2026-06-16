@@ -17,7 +17,7 @@ from src.models.time_series import (
     create_sequences,
     fit_arima,
     forecast_arima,
-    train_lstm,
+    train_ridge_sequence,
 )
 
 
@@ -159,21 +159,21 @@ class TestFitAndForecastARIMA:
         assert isinstance(fc, pd.Series)
 
 
-class TestTrainLSTM:
+class TestTrainRidgeSequence:
     def test_metrics_present(self):
         rng = np.random.default_rng(5)
         prices = pd.Series(100 * np.cumprod(1 + rng.normal(0, 0.01, 300)))
-        result = train_lstm(prices, seq_length=20, test_size=0.2)
+        result = train_ridge_sequence(prices, seq_length=20, test_size=0.2)
         for key in ("mae", "rmse"):
             assert key in result["metrics"]
 
     def test_prediction_length_matches_test(self):
         rng = np.random.default_rng(5)
         prices = pd.Series(100 * np.cumprod(1 + rng.normal(0, 0.01, 300)))
-        result = train_lstm(prices, seq_length=20, test_size=0.2)
+        result = train_ridge_sequence(prices, seq_length=20, test_size=0.2)
         assert len(result["y_pred"]) == len(result["y_test"])
 
     def test_too_short_raises(self):
         prices = pd.Series([100.0] * 10)
         with pytest.raises(ValueError):
-            train_lstm(prices, seq_length=60)
+            train_ridge_sequence(prices, seq_length=60)

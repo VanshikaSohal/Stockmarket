@@ -45,8 +45,7 @@ Scipy `minimize` with SLSQP is used.
 - Same feature set; target is the raw next-day return value
 
 ### Sequence Model
-- MinMaxScaler normalisation → overlapping 60-step windows → Ridge regression
-- Acts as an LSTM surrogate with no deep-learning dependency
+- MinMaxScaler normalisation → overlapping 60-step windows → Ridge regression (`train_ridge_sequence`)
 
 ### ARIMA Baseline
 - Statsmodels ARIMA(1,0,1) on return series

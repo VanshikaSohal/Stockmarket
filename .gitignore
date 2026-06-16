@@ -38,3 +38,4 @@ reports/figures/*.png
 reports/figures/*.jpg
 reports/results/*.csv
 !reports/figures/.gitkeep
+PROJECT_EXPLAINED.md
