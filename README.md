@@ -1,136 +1,194 @@
 # Portfolio Risk Analyzer
 
-A production-grade, end-to-end **stock portfolio risk analysis system** that combines classical financial theory with machine learning and Bayesian inference. Built entirely in Python with a clean modular architecture.
+> An institutional-grade, end-to-end quantitative finance pipeline that combines classical portfolio theory, machine learning forecasting, and Bayesian inference to deliver actionable risk insights across an 11-stock universe.
 
 ---
 
-## What This Project Does
+## Why This Project Matters
 
-Given a universe of 11 large-cap US stocks, this system:
+Most retail finance tools stop at price charts. This system goes further — it simulates the kind of pipeline used by quantitative analysts and risk desks at hedge funds and asset managers:
 
-1. Downloads 5 years of historical OHLCV data from Yahoo Finance
-2. Runs full exploratory data analysis — return distributions, correlations, rolling volatility
-3. Computes institutional-grade risk metrics — VaR, CVaR, Sharpe, Sortino, Calmar, Max Drawdown
-4. Optimises portfolio weights — Minimum Variance and Maximum Sharpe portfolios via SLSQP
-5. Simulates the Efficient Frontier across 5,000 random portfolios
-6. Trains ML models (Random Forest + XGBoost) to predict next-day direction and returns
-7. Fits ARIMA and `train_ridge_sequence` (sliding-window Ridge regression) for price forecasting
-8. Estimates Bayesian posterior return distributions using a conjugate Normal-Inverse-Gamma model
+- **Classical finance**: VaR, CVaR, Sharpe, Sortino, Calmar, drawdown, efficient frontier
+- **Portfolio optimisation**: SLSQP-based minimum variance and maximum Sharpe weight allocation
+- **Machine learning**: Random Forest and XGBoost for direction classification and return regression
+- **Time series**: ARIMA baseline and sliding-window Ridge regression for price forecasting
+- **Bayesian inference**: Normal-Inverse-Gamma conjugate posteriors with James-Stein shrinkage
+
+This is not a tutorial project. Every module is production-structured, tested, and backed by real market data.
+
+---
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        config.yaml                                  │
+│           (tickers, weights, dates, confidence levels)              │
+└──────────────────────────┬──────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  01  DATA COLLECTION                                                │
+│      yfinance → 11 stocks × 1,255 days → OHLCV CSVs               │
+└──────────────────────────┬──────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  02  PREPROCESSING & EDA                                            │
+│      Simple returns · Log returns · Technical features             │
+│      Distributions · Correlation matrix · Rolling volatility       │
+└──────────┬────────────────────────────────────────┬────────────────┘
+           │                                        │
+           ▼                                        ▼
+┌─────────────────────────┐            ┌────────────────────────────┐
+│  03  PORTFOLIO ANALYSIS │            │  04  ML FORECASTING        │
+│                         │            │                            │
+│  · Min Variance weights │            │  · Random Forest (52.4%)   │
+│  · Max Sharpe weights   │            │  · XGBoost (53.2%)         │
+│  · Efficient Frontier   │            │  · ARIMA(1,0,1) baseline   │
+│  · VaR / CVaR / Sharpe  │            │  · Ridge sequence model    │
+│  · Sortino / Calmar     │            │    (MAE = 3.62)            │
+│  · Drawdown analysis    │            │                            │
+└─────────────────────────┘            └────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  05  BAYESIAN MODELING                                              │
+│      Normal-Inverse-Gamma posteriors · James-Stein shrinkage       │
+│      Posterior predictive distributions · Credible intervals       │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Portfolio Universe
 
-11 stocks across 6 sectors — 2020-01-01 to 2024-12-27 (1,255 trading days)
+11 large-cap US equities across 6 GICS sectors — 2020-01-03 to 2024-12-27
 
-| Ticker | Company | Sector |
-|---|---|---|
-| AAPL | Apple | Technology |
-| MSFT | Microsoft | Technology |
-| GOOGL | Alphabet | Communication Services |
-| AMZN | Amazon | Consumer Discretionary |
-| JNJ | Johnson & Johnson | Health Care |
-| UNH | UnitedHealth | Health Care |
-| PFE | Pfizer | Health Care |
-| JPM | JPMorgan Chase | Financials |
-| V | Visa | Financials |
-| WMT | Walmart | Consumer Staples |
-| XOM | Exxon Mobil | Energy |
+| Ticker | Company | Sector | Ann. Return | Sharpe |
+|---|---|---|---|---|
+| AAPL | Apple | Technology | 30.2% | 0.89 |
+| MSFT | Microsoft | Technology | 25.4% | 0.77 |
+| GOOGL | Alphabet | Communication | 26.2% | 0.74 |
+| AMZN | Amazon | Consumer Disc. | 23.7% | 0.60 |
+| WMT | Walmart | Consumer Staples | 20.9% | 0.84 |
+| JPM | JPMorgan | Financials | 18.9% | 0.52 |
+| XOM | Exxon Mobil | Energy | 19.0% | 0.49 |
+| UNH | UnitedHealth | Health Care | 17.1% | 0.51 |
+| V | Visa | Financials | 14.9% | 0.46 |
+| JNJ | J&J | Health Care | 4.6% | 0.13 |
+| PFE | Pfizer | Health Care | 1.4% | −0.02 |
 
 ---
 
 ## Key Results
 
+### Portfolio Optimisation
+
+| Portfolio | Ann. Return | Sharpe | Max Drawdown | 5yr Cumulative |
+|---|---|---|---|---|
+| Equal Weight | 18.4% | 0.82 | −29.0% | +126.1% |
+| Minimum Variance | 18.4% | 0.82 | −29.0% | +126.1% |
+| **Maximum Sharpe** | **24.1%** | **1.08** | **−20.9%** | **+199.0%** |
+
 ### Risk Metrics (Equal-Weight Portfolio)
 
-| Metric | Value |
-|---|---|
-| Annualised Return | 18.38% |
-| Annualised Volatility | 19.96% |
-| Sharpe Ratio | 0.82 |
-| Sortino Ratio | 0.78 |
-| VaR (95%) | 1.65% daily |
-| CVaR (95%) | 3.00% daily |
+| Metric | Value | What it means |
+|---|---|---|
+| VaR (95%) | 1.65% daily | On 95% of days, loss will not exceed 1.65% |
+| CVaR (95%) | 3.00% daily | Average loss on the worst 5% of days |
+| Sharpe Ratio | 0.82 | 0.82 units of return per unit of risk |
+| Sortino Ratio | 0.78 | Penalises only downside volatility |
+| Calmar Ratio | 0.63 | Annual return relative to worst drawdown |
+| Max Drawdown | −29.0% | Worst peak-to-trough decline (COVID crash) |
 
-### ML Forecasting (AAPL Direction Classification)
+### ML Forecasting (AAPL)
 
-| Model | Accuracy |
-|---|---|
-| Random Forest | 52.4% |
-| XGBoost | 53.2% |
-
-> Note: >50% on stock direction prediction with only lag features is expected — markets are near-efficient.
-
-### Bayesian Estimates (Annualised, shrinkage-adjusted)
-
-| Ticker | Return Estimate |
-|---|---|
-| AAPL | 24.31% |
-| AMZN | 21.04% |
-| GOOGL | 22.27% |
-| JNJ | 11.48% |
-| JPM | 18.66% |
+| Model | Task | Result |
+|---|---|---|
+| Random Forest | Direction classification | 52.4% accuracy |
+| XGBoost | Direction classification | 53.2% accuracy |
+| Random Forest | Return regression | MAE 0.0105 |
+| XGBoost | Return regression | MAE 0.0108 |
+| Ridge Sequence | Price forecasting | MAE 3.62 |
+| ARIMA(1,0,1) | Returns baseline | ADF p < 0.0001 |
 
 ---
 
-## Visualizations Produced
+## Visual Insights
 
-### Notebook 02 — EDA
-
-**Return Distributions** — histogram + KDE for all 11 stocks  
-Shows which stocks have fat tails (PFE, XOM) vs near-normal (WMT, JNJ)
-
-**Risk-Return Scatter** — each stock plotted as Annualised Return vs Annualised Volatility  
-Instantly shows which stocks give the best return per unit of risk
-
-**Correlation Heatmap** — pairwise correlation matrix  
-Tech stocks (AAPL, MSFT, GOOGL, AMZN) are highly correlated (~0.7+); XOM is least correlated with others
-
-**30-Day Rolling Volatility** — all 11 stocks over time  
-COVID crash (March 2020) clearly visible as a volatility spike across all names
+### Return Distributions — Which stocks carry tail risk?
+![Return Distributions](reports/figures/return_distributions.png)
+> Histograms with KDE overlays for all 11 stocks. PFE and XOM show the fattest tails. WMT and JNJ are closest to normal — as expected for defensive names.
 
 ---
 
-### Notebook 03 — Portfolio Analysis
-
-**Cumulative Returns Chart** — 3 portfolios compared over 5 years  
-Equal-Weight vs Minimum Variance vs Maximum Sharpe — shows how optimised portfolios diverge over time
-
-**Drawdown Chart** — how far portfolio fell from its peak at each point  
-Red shaded area below zero — COVID drawdown (March 2020) clearly visible
-
-**Rolling 30-Day VaR** — how daily risk changed over time  
-Spikes during high-volatility periods (COVID, 2022 rate hike selloff)
-
-**Efficient Frontier** — 5,000 simulated random portfolios  
-Each dot is a portfolio; color = Sharpe ratio; the upper-left curve is the frontier  
-Shows the risk-return tradeoff and where the optimal portfolios lie
-
-**Correlation Heatmap** — portfolio-level asset correlation
+### Risk–Return Scatter — Where is the best risk-adjusted value?
+![Risk Return Scatter](reports/figures/risk_return_scatter.png)
+> Each dot is one stock. Stocks in the upper-left quadrant (high return, low risk) are most attractive. AAPL and WMT dominate. PFE sits bottom-right — high risk, near-zero return over this period.
 
 ---
 
-### Notebook 04 — ML Forecasting
-
-**XGBoost Feature Importances** — which lag features matter most for AAPL direction  
-Recent lags (lag_1, lag_2) dominate; cross-stock features also contribute
-
-**Sequence Model: Predicted vs Actual** — Ridge regression on 60-day windows  
-Predicted AAPL price trajectory closely tracks actual prices in the test period
-
-**ARIMA Forecast** — 30-step out-of-sample forecast vs actual log returns  
-ARIMA correctly identifies the near-zero mean-reverting nature of returns
+### Correlation Heatmap — How diversified is the portfolio?
+![Correlation Heatmap](reports/figures/correlation_heatmap.png)
+> Tech names (AAPL, MSFT, GOOGL, AMZN) are highly correlated (0.7+) — they move together. XOM and JNJ are the least correlated with the rest, providing genuine diversification benefit.
 
 ---
 
-### Notebook 05 — Bayesian Modeling
+### Rolling 30-Day Volatility — Market stress over time
+![Rolling Volatility](reports/figures/rolling_volatility.png)
+> Volatility spikes are visible at: COVID crash (March 2020), Fed rate hike cycle (2022), and regional banking stress (2023). This validates the model's ability to capture regime changes.
 
-**Posterior Predictive Distributions** — 4 tickers (AAPL, AMZN, GOOGL, JNJ)  
-Each chart overlays the empirical return histogram with the Bayesian posterior predictive distribution (Student-t)  
-95% credible intervals shown as dashed lines — wider for volatile stocks
+---
 
-**MLE vs Bayesian Shrinkage Bar Chart** — all 11 tickers  
-Shrinkage pulls extreme estimates toward the grand mean — more conservative and robust estimates for portfolio construction
+### Portfolio Cumulative Returns — Does optimisation add value?
+![Cumulative Returns](reports/figures/cumulative_returns.png)
+> Max Sharpe portfolio (Sharpe 1.08, +199% over 5 years) clearly outperforms equal-weight (+126%). This is the core output of the SLSQP optimisation.
+
+---
+
+### Drawdown — How deep did each portfolio fall?
+![Drawdown](reports/figures/drawdown.png)
+> Max Sharpe portfolio's worst drawdown was −20.9% vs −29.0% for equal-weight. Optimisation not only improved returns but meaningfully reduced downside risk.
+
+---
+
+### Rolling 30-Day VaR — How risk evolved over time
+![Rolling VaR](reports/figures/rolling_var.png)
+> VaR spikes sharply during COVID (March 2020) and the 2022 rate-hike selloff, confirming the metric's sensitivity to market regimes — useful for dynamic risk budgeting.
+
+---
+
+### Efficient Frontier — 5,000 simulated portfolios
+![Efficient Frontier](reports/figures/efficient_frontier.png)
+> Each point is a randomly weighted portfolio. Color = Sharpe ratio. The upper-left curve is the efficient frontier. The brightest (yellow) points represent the maximum Sharpe region — where the optimiser converges.
+
+---
+
+### XGBoost Feature Importances — What drives next-day direction?
+![Feature Importances](reports/figures/feature_importances.png)
+> Recent lags (lag_1, lag_2) of AAPL dominate. Cross-stock lag features also contribute, confirming inter-asset momentum effects. Features built from 55 variables (5 lags × 11 stocks).
+
+---
+
+### Sequence Model — Predicted vs Actual AAPL Price
+![Sequence Prediction](reports/figures/sequence_prediction.png)
+> Ridge regression on 60-day sliding windows closely tracks AAPL price trajectory in the test set. A strong baseline without any deep learning dependency.
+
+---
+
+### ARIMA Forecast — Returns baseline
+![ARIMA Forecast](reports/figures/arima_forecast.png)
+> ARIMA(1,0,1) on stationary return series (ADF p < 0.0001). Forecast correctly identifies the near-zero mean-reverting nature of daily returns — a sound statistical baseline.
+
+---
+
+### Bayesian Posterior Predictive Distributions
+![Bayesian AAPL](reports/figures/bayesian_aapl.png)
+> Empirical return histogram (blue) vs posterior predictive Student-t distribution (red) for AAPL. Dashed lines mark the 95% credible interval. The conjugate model fits the tails well.
+
+![Bayesian Shrinkage](reports/figures/bayesian_shrinkage.png)
+> James-Stein shrinkage pulls extreme estimates (AAPL 30.2% → 24.3%, PFE 1.4% → 9.9%) toward the grand mean. This reduces estimation error and produces more conservative, robust inputs for portfolio construction.
 
 ---
 
@@ -138,86 +196,79 @@ Shrinkage pulls extreme estimates toward the grand mean — more conservative an
 
 ```
 Stockmarket/
-├── config.yaml                   ← Central config: tickers, weights, parameters
+├── config.yaml                        ← Tickers, weights, risk parameters
 ├── requirements.txt
-├── conftest.py                   ← pytest path config
-│
+├── conftest.py
 ├── data/
 │   └── raw/
-│       ├── stock_data.csv        ← OHLCV for all 11 stocks (1,256 rows)
-│       ├── stock_returns.csv     ← Daily simple returns (1,255 rows × 11 cols)
-│       └── stock_log_returns.csv ← Daily log returns
-│
+│       ├── stock_data.csv             ← OHLCV — 11 stocks × 1,256 rows
+│       ├── stock_returns.csv          ← Daily simple returns
+│       └── stock_log_returns.csv      ← Daily log returns
 ├── notebooks/
-│   ├── 01_data_collection.ipynb  ← Download + save raw data
-│   ├── 02_eda.ipynb              ← 4 charts: distributions, scatter, heatmap, rolling vol
-│   ├── 03_portfolio_analysis.ipynb ← 5 charts + full risk metrics table
-│   ├── 04_ml_forecasting.ipynb   ← 3 charts + RF/XGB/ARIMA results
-│   └── 05_bayesian_modeling.ipynb ← 5 charts + posterior tables
-│
+│   ├── 01_data_collection.ipynb
+│   ├── 02_eda.ipynb
+│   ├── 03_portfolio_analysis.ipynb
+│   ├── 04_ml_forecasting.ipynb
+│   └── 05_bayesian_modeling.ipynb
 ├── src/
-│   ├── utils/
-│   │   ├── config.py             ← load_config() — reads config.yaml
-│   │   └── helpers.py            ← annualize, lag features, rolling splits
-│   ├── data/
-│   │   ├── fetch_data.py         ← yfinance download helpers
-│   │   └── preprocess.py         ← returns, log returns, technical features, normalization
-│   ├── analysis/
-│   │   ├── risk_metrics.py       ← VaR, CVaR, Sharpe, Sortino, Calmar, rolling metrics
-│   │   └── portfolio.py          ← portfolio returns, drawdown, min-var/max-Sharpe optimization
-│   ├── models/
-│   │   ├── supervised_ml.py      ← Random Forest + XGBoost (classification + regression)
-│   │   └── time_series.py        ← ARIMA, ADF test, train_ridge_sequence (sliding window Ridge)
-│   └── visualization/
-│       └── plots.py              ← 9 chart functions, all return matplotlib Figure
-│
+│   ├── utils/        config.py · helpers.py
+│   ├── data/         fetch_data.py · preprocess.py
+│   ├── analysis/     risk_metrics.py · portfolio.py
+│   ├── models/       supervised_ml.py · time_series.py
+│   └── visualization/plots.py
 ├── tests/
-│   ├── test_data.py              ← preprocessing unit tests
-│   ├── test_risk_metrics.py      ← risk metric + portfolio unit tests (39 passing)
-│   └── test_models.py            ← ML model unit tests
-│
+│   ├── test_data.py
+│   ├── test_risk_metrics.py
+│   └── test_models.py
+├── reports/figures/                   ← All 17 exported charts
 └── docs/
-    ├── METHODOLOGY.md            ← All formulas: VaR, Sharpe, ARIMA, Bayesian math
-    └── PORTFOLIO_SELECTION.md    ← Why these 11 stocks — sector rationale
+    ├── METHODOLOGY.md
+    └── PORTFOLIO_SELECTION.md
 ```
 
 ---
 
 ## How to Run
 
-### 1. Install dependencies
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Run notebooks in order
-Open Jupyter with the `stock` kernel, then run:
+# Run notebooks in order (01 → 05)
+jupyter notebook
 
-```
-01_data_collection  →  02_eda  →  03_portfolio_analysis  →  04_ml_forecasting  →  05_bayesian_modeling
-```
-
-Each notebook reads from `data/raw/` — so after running 01 once, notebooks 02-05 can be run in any order.
-
-### 3. Run tests
-```bash
+# Run tests
 python -m pytest tests/ -v
 ```
+
+> All notebooks use the `stock` kernel (Python 3.10). After running notebook 01 once, notebooks 02–05 can be run independently.
 
 ---
 
 ## Tech Stack
 
-| Category | Libraries |
+| Layer | Libraries |
 |---|---|
 | Data | pandas, numpy, yfinance |
-| Visualization | matplotlib, seaborn |
-| Risk & Finance | scipy (optimization + stats) |
-| Time Series | statsmodels (ARIMA, ADF) |
+| Visualisation | matplotlib, seaborn |
+| Optimisation | scipy (SLSQP) |
+| Statistics | scipy.stats, statsmodels (ARIMA, ADF) |
 | Machine Learning | scikit-learn (Random Forest, Ridge, StandardScaler) |
 | Boosting | xgboost |
 | Config | pyyaml |
-| Testing | pytest |
+| Testing | pytest (39 tests) |
 
 ---
 
+## Difficulty Level
+
+**Intermediate → Advanced**
+
+| Layer | Level |
+|---|---|
+| Data pipeline + EDA | Intermediate |
+| Risk metrics (VaR, CVaR, Sortino, Calmar) | Intermediate–Advanced |
+| Portfolio optimisation (SLSQP, efficient frontier) | Advanced |
+| ML forecasting (RF, XGBoost, ARIMA) | Intermediate |
+| Bayesian conjugate inference + shrinkage | Advanced |
+| Production code structure + unit tests | Advanced |
