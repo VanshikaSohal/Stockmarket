@@ -118,13 +118,13 @@ This is not a tutorial project. Every module is production-structured, tested, a
 ## Visual Insights
 
 ### Return Distributions — Which stocks carry tail risk?
-![Return Distributions](reports/figures/return_distributions.png)
+![Return Distributions](./reports/figures/return_distributions.png)
 > Histograms with KDE overlays for all 11 stocks. PFE and XOM show the fattest tails. WMT and JNJ are closest to normal — as expected for defensive names.
 
 ---
 
 ### Risk–Return Scatter — Where is the best risk-adjusted value?
-![Risk Return Scatter](reports/figures/risk_return_scatter.png)
+![Risk Return Scatter](./reports/figures/risk_return_scatter.png)
 > Each dot is one stock. Stocks in the upper-left quadrant (high return, low risk) are most attractive. AAPL and WMT dominate. PFE sits bottom-right — high risk, near-zero return over this period.
 
 ---
@@ -260,15 +260,4 @@ python -m pytest tests/ -v
 
 ---
 
-## Difficulty Level
 
-**Intermediate → Advanced**
-
-| Layer | Level |
-|---|---|
-| Data pipeline + EDA | Intermediate |
-| Risk metrics (VaR, CVaR, Sortino, Calmar) | Intermediate–Advanced |
-| Portfolio optimisation (SLSQP, efficient frontier) | Advanced |
-| ML forecasting (RF, XGBoost, ARIMA) | Intermediate |
-| Bayesian conjugate inference + shrinkage | Advanced |
-| Production code structure + unit tests | Advanced |
