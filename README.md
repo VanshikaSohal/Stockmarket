@@ -117,80 +117,39 @@ This is not a tutorial project. Every module is production-structured, tested, a
 
 ## Visual Insights
 
-### Return Distributions — Which stocks carry tail risk?
+### Return Distributions — Understanding tail risk
 ![Return Distributions](./reports/figures/return_distributions.png)
-> Histograms with KDE overlays for all 11 stocks. PFE and XOM show the fattest tails. WMT and JNJ are closest to normal — as expected for defensive names.
 
 ---
 
-### Risk–Return Scatter — Where is the best risk-adjusted value?
+### Risk–Return Tradeoff — Which stocks are efficient?
 ![Risk Return Scatter](./reports/figures/risk_return_scatter.png)
-> Each dot is one stock. Stocks in the upper-left quadrant (high return, low risk) are most attractive. AAPL and WMT dominate. PFE sits bottom-right — high risk, near-zero return over this period.
 
 ---
 
-### Correlation Heatmap — How diversified is the portfolio?
-![Correlation Heatmap](reports/figures/correlation_heatmap.png)
-> Tech names (AAPL, MSFT, GOOGL, AMZN) are highly correlated (0.7+) — they move together. XOM and JNJ are the least correlated with the rest, providing genuine diversification benefit.
+### Correlation Structure — Diversification check
+![Correlation Heatmap](./reports/figures/correlation_heatmap.png)
 
 ---
 
-### Rolling 30-Day Volatility — Market stress over time
-![Rolling Volatility](reports/figures/rolling_volatility.png)
-> Volatility spikes are visible at: COVID crash (March 2020), Fed rate hike cycle (2022), and regional banking stress (2023). This validates the model's ability to capture regime changes.
+### Efficient Frontier — Portfolio optimization landscape
+![Efficient Frontier](./reports/figures/efficient_frontier.png)
 
 ---
 
-### Portfolio Cumulative Returns — Does optimisation add value?
-![Cumulative Returns](reports/figures/cumulative_returns.png)
-> Max Sharpe portfolio (Sharpe 1.08, +199% over 5 years) clearly outperforms equal-weight (+126%). This is the core output of the SLSQP optimisation.
+### Portfolio Performance — Does optimization work?
+![Cumulative Returns](./reports/figures/cumulative_returns.png)
 
 ---
 
-### Drawdown — How deep did each portfolio fall?
-![Drawdown](reports/figures/drawdown.png)
-> Max Sharpe portfolio's worst drawdown was −20.9% vs −29.0% for equal-weight. Optimisation not only improved returns but meaningfully reduced downside risk.
+### Risk Control — Drawdown analysis
+![Drawdown](./reports/figures/drawdown.png)
 
 ---
 
-### Rolling 30-Day VaR — How risk evolved over time
-![Rolling VaR](reports/figures/rolling_var.png)
-> VaR spikes sharply during COVID (March 2020) and the 2022 rate-hike selloff, confirming the metric's sensitivity to market regimes — useful for dynamic risk budgeting.
+### Market Stress — Rolling volatility
+![Rolling Volatility](./reports/figures/rolling_volatility.png)
 
----
-
-### Efficient Frontier — 5,000 simulated portfolios
-![Efficient Frontier](reports/figures/efficient_frontier.png)
-> Each point is a randomly weighted portfolio. Color = Sharpe ratio. The upper-left curve is the efficient frontier. The brightest (yellow) points represent the maximum Sharpe region — where the optimiser converges.
-
----
-
-### XGBoost Feature Importances — What drives next-day direction?
-![Feature Importances](reports/figures/feature_importances.png)
-> Recent lags (lag_1, lag_2) of AAPL dominate. Cross-stock lag features also contribute, confirming inter-asset momentum effects. Features built from 55 variables (5 lags × 11 stocks).
-
----
-
-### Sequence Model — Predicted vs Actual AAPL Price
-![Sequence Prediction](reports/figures/sequence_prediction.png)
-> Ridge regression on 60-day sliding windows closely tracks AAPL price trajectory in the test set. A strong baseline without any deep learning dependency.
-
----
-
-### ARIMA Forecast — Returns baseline
-![ARIMA Forecast](reports/figures/arima_forecast.png)
-> ARIMA(1,0,1) on stationary return series (ADF p < 0.0001). Forecast correctly identifies the near-zero mean-reverting nature of daily returns — a sound statistical baseline.
-
----
-
-### Bayesian Posterior Predictive Distributions
-![Bayesian AAPL](reports/figures/bayesian_aapl.png)
-> Empirical return histogram (blue) vs posterior predictive Student-t distribution (red) for AAPL. Dashed lines mark the 95% credible interval. The conjugate model fits the tails well.
-
-![Bayesian Shrinkage](reports/figures/bayesian_shrinkage.png)
-> James-Stein shrinkage pulls extreme estimates (AAPL 30.2% → 24.3%, PFE 1.4% → 9.9%) toward the grand mean. This reduces estimation error and produces more conservative, robust inputs for portfolio construction.
-
----
 
 ## Project Structure
 
