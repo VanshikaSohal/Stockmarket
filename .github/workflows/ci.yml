@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "reports/**"
+      - "notebooks/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "reports/**"
+      - "notebooks/**"
+
+env:
+  PYTHON_VERSION: "3.10"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
+
+      - name: Install dependencies
+        run: uv sync --group dev --frozen
+
+      - name: Check formatting (ruff format)
+        run: uv run ruff format --check src/ tests/ conftest.py
+
+      - name: Lint (ruff check)
+        run: uv run ruff check src/ tests/ conftest.py
+
+      - name: Check imports (isort)
+        run: uv run isort --check-only --diff src/ tests/ conftest.py
+
+      - name: Security lint (bandit)
+        run: uv run bandit -r src/ -x tests,notebooks -ll
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
+
+      - name: Install dependencies
+        run: uv sync --group dev --frozen
+
+      - name: mypy check
+        run: uv run mypy src/ conftest.py
+
+  test:
+    name: Test (Python ${{ env.PYTHON_VERSION }})
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
+
+      - name: Install dependencies
+        run: uv sync --group dev --frozen
+
+      - name: Run tests with coverage
+        run: |
+          uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  build:
+    name: Build Package
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.x"
+
+      - name: Build package
+        run: uv build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
