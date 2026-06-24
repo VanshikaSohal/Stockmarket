@@ -114,6 +114,14 @@ class AppSettings(BaseSettings):
     api_port: PositiveInt = Field(8000, description="API server port")
     api_workers: PositiveInt = Field(4, description="Number of API worker processes")
     cors_origins: List[str] = Field(default=["*"], description="Allowed CORS origins")
+    api_secret_key: str = Field(
+        "change-me-in-production-use-a-strong-random-key",
+        description="JWT signing secret key (set via PRA_API_SECRET_KEY env var)",
+    )
+    api_auth_enabled: bool = Field(
+        False,
+        description="Enable JWT authentication on API endpoints",
+    )
     data_dir: Path = Field(Path("data"), description="Data directory")
     reports_dir: Path = Field(Path("reports"), description="Reports output directory")
     models_dir: Path = Field(Path("models"), description="Trained model artifacts directory")

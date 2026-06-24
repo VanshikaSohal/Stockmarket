@@ -22,6 +22,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 
+from src.api.auth import get_current_user
+from src.api.middleware import configure_middleware, configure_rate_limiting
 from src.utils.settings import AppSettings, load_settings
 
 # ── Structured logging ─────────────────────────────────────────────────────
@@ -133,6 +135,12 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # ── Middleware ───────────────────────────────────────────────────────
+    configure_middleware(app)
+
+    # ── Rate limiting ───────────────────────────────────────────────────
+    configure_rate_limiting(app)
+
     # ── Prometheus metrics ──────────────────────────────────────────────
     metrics_app = make_asgi_app()
     app.mount("/metrics", metrics_app)
@@ -141,6 +149,10 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     from src.api.routes import router as api_router
 
     app.include_router(api_router, prefix="/api/v1")
+
+    # ── Auth dependency override ─────────────────────────────────────────
+    if not settings.api_auth_enabled:
+        app.dependency_overrides[get_current_user] = lambda: {"sub": "anonymous", "role": "admin"}
 
     return app
 
