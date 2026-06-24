@@ -6,7 +6,10 @@ __pycache__/
 .Python
 env/
 venv/
-.venv
+.venv/
+*.egg-info/
+dist/
+build/
 
 # Jupyter
 .ipynb_checkpoints
@@ -22,6 +25,8 @@ data/processed/*.csv
 models/*.pkl
 models/*.h5
 models/*.joblib
+models/*.pt
+models/*.pth
 
 # IDE
 .vscode/
@@ -37,3 +42,37 @@ Thumbs.db
 reports/results/*.csv
 !reports/figures/.gitkeep
 PROJECT_EXPLAINED.md
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+
+# Docker
+.docker/
+
+# Build & cache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+htmlcov/
+coverage.xml
+*.coverage*
+.mypy_cache/
+.pytest_cache/
+
+# uv
+.uv/
+
+# Logs
+*.log
+
+# MLflow artifacts
+mlruns/
+
+# Temp
+tmp/
+temp/

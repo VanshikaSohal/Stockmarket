@@ -1,0 +1,89 @@
+# =============================================================================
+# Docker Compose for Portfolio Risk Analyzer
+# =============================================================================
+# Usage:
+#   docker compose up -d          # Start API service
+#   docker compose up dev         # Start development environment
+#   docker compose down           # Stop all services
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ── Production API ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: portfolio-risk-analyzer:latest
+    container_name: pra-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CONFIG_PATH=/app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "python", "-c", "import http.client; http.client.HTTPConnection('localhost', 8000).request('GET', '/health'); exit(0 if http.client.HTTPConnection('localhost', 8000).getresponse().status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pra-network
+
+  # ── Development Environment ─────────────────────────────────────────────
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: portfolio-risk-analyzer:dev
+    container_name: pra-dev
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "${DEV_PORT:-8001}:8000"
+    environment:
+      - APP_ENV=development
+      - PORT=8000
+      - LOG_LEVEL=debug
+      - CONFIG_PATH=/app/config.yaml
+    volumes:
+      - ./:/app
+    networks:
+      - pra-network
+
+  # ── Jupyter Notebook Server ─────────────────────────────────────────────
+  notebook:
+    image: portfolio-risk-analyzer:latest
+    container_name: pra-notebook
+    command: >
+      jupyter notebook
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+      --notebook-dir=/app/notebooks
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+    environment:
+      - APP_ENV=development
+    volumes:
+      - ./:/app
+    networks:
+      - pra-network
+
+networks:
+  pra-network:
+    name: portfolio-risk-network
+    driver: bridge

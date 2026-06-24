@@ -1,0 +1,60 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Data (excluded for size; mount volumes at runtime)
+data/raw/
+data/processed/
+
+# Reports
+reports/figures/
+reports/results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests & CI
+tests/
+.github/
+
+# Docs
+docs/
+notebooks/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Environment & secrets
+.env
+.env.*
+*.key
+*.pem
+*.crt
+
+# Pre-commit
+.pre-commit-config.yaml
