@@ -64,6 +64,14 @@ from src.models.deep_learning import (
     train_temporal_fusion_transformer,
 )
 
+# ── Phase 3: Bayesian Models ─────────────────────────────────────────────
+from src.models.bayesian_hierarchical import (
+    hierarchical_regression,
+    hierarchical_pooling_factor,
+    horseshoe_regression,
+    loo_cv_comparison,
+)
+
 __all__ = [
     # Existing
     "build_features_and_target",
@@ -109,4 +117,9 @@ __all__ = [
     "train_sequence_rnn",
     "train_temporal_fusion_transformer",
     "train_nbeats",
+    # Phase 3
+    "hierarchical_regression",
+    "horseshoe_regression",
+    "loo_cv_comparison",
+    "hierarchical_pooling_factor",
 ]
