@@ -160,6 +160,14 @@ module = [
     "plotly.*",
     "yaml",
     "nbformat.*",
+    "mlflow",
+    "optuna",
+    "shap",
+    "lightgbm",
+    "catboost",
+    "torch",
+    "pytorch_lightning",
+    "pytorch_forecasting",
 ]
 ignore_missing_imports = true
 
