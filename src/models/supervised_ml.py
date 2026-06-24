@@ -1,5 +1,8 @@
 """
 Supervised ML models for return/direction forecasting: Random Forest and XGBoost.
+
+Extended with MLflow auto-logging wrappers and additional model support
+(LightGBM, CatBoost) for ensemble and Optuna integration.
 """
 
 import logging
@@ -190,3 +193,206 @@ def get_feature_importances(result, feature_names):
     """
     importances = result["model"].feature_importances_
     return pd.Series(importances, index=feature_names).sort_values(ascending=False)
+
+
+# =============================================================================
+# MLflow-auto-logged wrappers (additive layer — original functions unchanged)
+# =============================================================================
+
+
+def train_random_forest_with_mlflow(
+    X, y, task="classification", test_size=0.2, random_state=42, experiment_name=None
+):
+    """
+    Train a Random Forest with MLflow auto-logging of params, metrics, and model.
+
+    Args: same as :func:`train_random_forest`.
+
+    Returns:
+        dict: Same as :func:`train_random_forest` but the run is also logged to MLflow.
+    """
+    try:
+        from src.models.mlflow_tracking import mlflow_run, log_sklearn_model, log_metrics_from_dict
+        from sklearn.model_selection import train_test_split
+
+        with mlflow_run(
+            run_name=f"rf_{task}_{random_state}",
+            tags={"model": "random_forest", "task": task},
+        ):
+            import mlflow
+
+            mlflow.log_params({
+                "task": task,
+                "test_size": test_size,
+                "random_state": random_state,
+            })
+            result = train_random_forest(X, y, task=task, test_size=test_size, random_state=random_state)
+            log_metrics_from_dict(result["metrics"])
+            log_sklearn_model(result["model"])
+            return result
+    except ImportError:
+        logger.warning("MLflow not available, falling back to standard training.")
+        return train_random_forest(X, y, task=task, test_size=test_size, random_state=random_state)
+
+
+def train_xgboost_with_mlflow(
+    X, y, task="classification", test_size=0.2, random_state=42, experiment_name=None
+):
+    """
+    Train an XGBoost model with MLflow auto-logging.
+
+    Args: same as :func:`train_xgboost`.
+
+    Returns:
+        dict: Same as :func:`train_xgboost` but with MLflow logging.
+    """
+    try:
+        from src.models.mlflow_tracking import mlflow_run, log_sklearn_model, log_metrics_from_dict
+
+        with mlflow_run(
+            run_name=f"xgb_{task}_{random_state}",
+            tags={"model": "xgboost", "task": task},
+        ):
+            import mlflow
+
+            mlflow.log_params({
+                "task": task,
+                "test_size": test_size,
+                "random_state": random_state,
+            })
+            result = train_xgboost(X, y, task=task, test_size=test_size, random_state=random_state)
+            log_metrics_from_dict(result["metrics"])
+            log_sklearn_model(result["model"])
+            return result
+    except ImportError:
+        logger.warning("MLflow not available, falling back to standard training.")
+        return train_xgboost(X, y, task=task, test_size=test_size, random_state=random_state)
+
+
+# =============================================================================
+# LightGBM and CatBoost trainers (optionally imported)
+# =============================================================================
+
+
+def train_lightgbm(X, y, task="classification", test_size=0.2, random_state=42):
+    """
+    Train a LightGBM model (classification or regression).
+
+    Requires ``lightgbm``. Install with ``pip install lightgbm``.
+    """
+    try:
+        import lightgbm as lgb
+    except ImportError:
+        raise ImportError("LightGBM is required. Install: pip install lightgbm")
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, shuffle=False
+    )
+    scaler = StandardScaler()
+    X_train_s = scaler.fit_transform(X_train)
+    X_test_s = scaler.transform(X_test)
+
+    if task == "classification":
+        model = lgb.LGBMClassifier(
+            n_estimators=200,
+            max_depth=6,
+            learning_rate=0.05,
+            num_leaves=64,
+            random_state=random_state,
+            verbose=-1,
+            n_jobs=-1,
+        )
+        model.fit(X_train_s, y_train)
+        y_pred = model.predict(X_test_s)
+        metrics = {
+            "accuracy": float(accuracy_score(y_test, y_pred)),
+            "report": classification_report(y_test, y_pred, output_dict=True),
+        }
+    else:
+        model = lgb.LGBMRegressor(
+            n_estimators=200,
+            max_depth=6,
+            learning_rate=0.05,
+            num_leaves=64,
+            random_state=random_state,
+            verbose=-1,
+            n_jobs=-1,
+        )
+        model.fit(X_train_s, y_train)
+        y_pred = model.predict(X_test_s)
+        metrics = {
+            "mae": float(mean_absolute_error(y_test, y_pred)),
+            "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
+            "r2": float(r2_score(y_test, y_pred)),
+        }
+
+    logger.info("LightGBM (%s) metrics: %s", task, metrics)
+    return {
+        "model": model,
+        "scaler": scaler,
+        "metrics": metrics,
+        "X_test": X_test,
+        "y_test": y_test,
+        "y_pred": y_pred,
+    }
+
+
+def train_catboost(X, y, task="classification", test_size=0.2, random_state=42):
+    """
+    Train a CatBoost model (classification or regression).
+
+    Requires ``catboost``. Install with ``pip install catboost``.
+    """
+    try:
+        from catboost import CatBoostClassifier, CatBoostRegressor
+    except ImportError:
+        raise ImportError("CatBoost is required. Install: pip install catboost")
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, shuffle=False
+    )
+    scaler = StandardScaler()
+    X_train_s = scaler.fit_transform(X_train)
+    X_test_s = scaler.transform(X_test)
+
+    if task == "classification":
+        model = CatBoostClassifier(
+            iterations=200,
+            depth=6,
+            learning_rate=0.05,
+            l2_leaf_reg=3.0,
+            random_seed=random_state,
+            verbose=0,
+        )
+        model.fit(X_train_s, y_train, verbose=False)
+        y_pred = model.predict(X_test_s)
+        metrics = {
+            "accuracy": float(accuracy_score(y_test, y_pred)),
+            "report": classification_report(y_test, y_pred, output_dict=True),
+        }
+    else:
+        model = CatBoostRegressor(
+            iterations=200,
+            depth=6,
+            learning_rate=0.05,
+            l2_leaf_reg=3.0,
+            random_seed=random_state,
+            verbose=0,
+        )
+        model.fit(X_train_s, y_train, verbose=False)
+        y_pred = model.predict(X_test_s)
+        metrics = {
+            "mae": float(mean_absolute_error(y_test, y_pred)),
+            "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
+            "r2": float(r2_score(y_test, y_pred)),
+        }
+
+    logger.info("CatBoost (%s) metrics: %s", task, metrics)
+    return {
+        "model": model,
+        "scaler": scaler,
+        "metrics": metrics,
+        "X_test": X_test,
+        "y_test": y_test,
+        "y_pred": y_pred,
+    }
