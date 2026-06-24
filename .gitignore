@@ -73,6 +73,12 @@ coverage.xml
 # MLflow artifacts
 mlruns/
 
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+
 # Temp
 tmp/
 temp/
